@@ -1,0 +1,229 @@
+<?php
+defined('_JEXEC') or die('Restricted access');
+$app			= JFactory::getApplication();
+$doc			= JFactory::getDocument();
+$templateparams	= $app->getTemplate(true)->params;
+$doc->addScript($this->baseurl.'/templates/'.$this->template.'/javascript/funciones.js', 'text/javascript', true);
+//include_once(JPATH_BASE .DS.'templates'.DS.$this->template.DS.'assets'.DS.'xajax.func.inc.php');
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php echo $this->language; ?>" lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>" >
+<head>
+	<jdoc:include type="head" />
+	<link href="<?php echo $this->baseurl ?>/templates/<?php echo $this->template;?>/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+	<link href="<?php echo $this->baseurl ?>/templates/<?php echo $this->template;?>/css/template_css.css" rel="stylesheet" type="text/css" /> 	
+	<script type="text/javascript" src="<?php echo $this->baseurl ?>/templates/<?php echo $this->template;?>/js/jquery-1.4.2.min.js"></script>
+	<script type="text/javascript" src="<?php echo $this->baseurl ?>/templates/sitionuevo_home/js/jquery.validate.js"></script>
+	<script type="text/javascript" src="<?php echo $this->baseurl ?>/templates/sitionuevo_home/js/thickbox.js"></script>
+	<link rel="stylesheet" type="text/css" media="screen" href="<?php echo $this->baseurl ?>/templates/sitionuevo_home/css/thickbox.css" />
+	<?php //if ($xajax) $xajax->printJavascript('includes/xajax/'); ?>
+</head>
+  <body> 
+		<?php if ($this->countModules('mainmenu')): ?>
+			<jdoc:include type="modules" name="mainmenu" />  
+		<?php endif?>
+		<?php if ($this->countModules('breadcrumbs')): ?>
+			<jdoc:include type="modules" name="breadcrumbs" />  
+		<?php endif?>
+		<jdoc:include type="component" />
+  </body>
+</html>
+<script type="text/javascript">
+	$(document).on('click', 'a.tooltip', function(event) {
+		//$(".btn_ce").on('click', 'a', function( event ) {
+		// $('#agenda').delegate('a.tooltip', 'click', function(e) {
+		$(this).stop(true,true).addClass('current', 200 );
+		$(this).stop(true,true).animate({width:"-="+ancho, height:"-="+alto, top: "-="+top },{
+			duration: 'slow',
+			easing: 'easeInExpo'
+		}).fadeOut(580);
+	});
+
+	function onAfter(curr,next,opts) { 
+		var index=opts.currSlide;
+	} 
+	$('#slid_contact').cycle({
+		fx:     'scrollVert',
+		sync: 	true, 
+		speed  : 1000,
+		timeout: 0,
+		next   : '#next_cc',
+		prev   : '#prev_cc',
+		after : onAfter
+	});
+	$.fn.reset = function () {
+	  $(this).each (function() { this.reset(); });
+	}
+	$.validator.addMethod("lettersonly", function(value, element) {
+	  // return this.optional(element) || /^[a-z]+$/i.test(value);
+	  return this.optional(element) || /^[a-zA-Z\s]*$/i.test(value);
+	});
+	$.validator.addMethod("accept", function(value, element, param) {
+	  return value.match(new RegExp("." + param + "$"));
+	});
+</script>
+
+<script type="text/javascript">
+$(function(){
+	$("#josForm").validate({
+	    submitHandler: function(form) {
+			 //xajax_saveUser(xajax.getFormValues('josForm'));
+			//jQuery.post('index.php?option=com_mycomponente&task=function&format=raw',jQuery(form).serialize(), function(data){
+			jQuery.post('index.php?option=com_mycomponent&format=raw&controller=ajax.raw&task=grabacontacto',jQuery(form).serialize(), function(data){
+				if(data==1){
+					alert("grabar OK");
+				}else{
+					alert("grabar ERROR");
+				}
+			}); 
+	    },
+		ignore: ":hidden",
+		errorPlacement: function(error, element) {
+			error.appendTo(element.parent().parent().parent().children().last());
+		},
+		errorElement: "span",
+		errorClass: 'error',
+		rules: {
+			email: {
+				required:true,
+				email:true
+			},
+			"foto[]":
+			{
+				required: true,
+				minlength : 10,
+				maxlength : 1000
+			}
+		},
+		messages: {
+			email:{
+				required:"Campo obligatorio ",
+				email:" Campo obligatorio   "
+			},
+			"foto[]":
+			{
+				required: "",
+				minlength: "minlength",
+				maxlength: "maxlength"
+			}
+		},invalidHandler:function(){
+			
+		}
+	});	
+});
+</script>
+<?php
+//ARCHIVO	
+//components\com_mycomponent\controllers\ajaxraw.php	
+	<?php
+	/**
+	 * @version     1.0.0
+	 * @package     com_mycomponent
+	 * @copyright   Copyright (C) 2013. All rights reserved.
+	 * @license     GNU General Public License version 2 or later; see LICENSE.txt
+	 * @author      filo <arubilar@gmail.com> - http://
+	 */
+	 
+	// No direct access
+	defined('_JEXEC') or die;
+	jimport('joomla.application.component.controller');
+	class MycomponentControllerAjaxraw extends MycomponentController
+	{
+		function grabacontacto(){
+			$jinput = JFactory::getApplication()->input;
+			// $foo = $jinput->post->get('nombre', 'none', 'USERNAME');
+			$fooValues = $jinput->getArray(array(
+				'nombre' => 'USERNAME',
+				'email' => 'STRING',
+				'tema' => 'USERNAME',
+				'mensaje' => 'STRING',
+				'id_sede'  => 'INT',
+				'email_sede'  => 'STRING'
+			));
+			
+			$date =& JFactory::getDate();
+			$fooValues['created'] = $date->toFormat();
+
+			$profile = new stdClass();
+			$profile->nombre 	= $fooValues['nombre'];
+			$profile->email		= $fooValues['email'];
+			$profile->tema		= $fooValues['tema'];
+			$profile->mensaje	= $fooValues['mensaje'];
+			$profile->sede		= $fooValues['id_sede'];
+			$profile->created	= $fooValues['created'];
+			 
+			try {
+				// Insert the object into the user profile table.
+				$result = JFactory::getDbo()->insertObject('#__icagenda_contacto', $profile);
+			} catch (Exception $e) {
+				// catch any errors.
+			}
+			// Get a db connection.
+			$db = JFactory::getDbo();
+			// Create a new query object.
+			// $query = $db->getQuery(true);
+			 
+			// Select all records from the user profile table where key begins with "custom.".
+			// Order it by the ordering field.
+		/* 	$query->select(array('title'));
+			$query->from('#__icagenda_sede');
+			$query->where('id='.$fooValues['id_sede']); */
+			$query = "SELECT * FROM #__icagenda_sede WHERE id=".$fooValues['id_sede'];
+			// Reset the query using our newly populated query object.
+			$db->setQuery($query);
+			 
+			// Load the results as a list of stdClass objects.
+			$results = $db->loadObject();
+			
+			//Enviar email
+			$mailer =& JFactory::getMailer();
+			$config =& JFactory::getConfig();
+			$sender = array( 
+			$config->getValue( 'config.mailfrom' ),
+			$config->getValue( 'config.fromname' ) );
+	 
+			$mailer->setSender($sender);
+			
+	/* 		$user =& JFactory::getUser();
+			$recipient = $user->email; */
+			 
+			// $mailer->addRecipient($recipient);
+			$mailer->addRecipient($results->email);
+			// $mailer->addRecipient("agnrubilar@gmail.com");
+			 
+
+			
+			$mailer->setSubject('Contacto sede '.$results->title);
+
+			$body   = '<h2>Contacto  sede ' .$results->title .' </h2>'
+				. '<p>Muchas gracias por comunicarte con nosotros, pronto nos comunicaremos con usted.</p>'
+				. '<div>'
+				. '<p>Nombre: ' .$fooValues['nombre'] .'</p>'
+				. '<p>Email: ' .$fooValues['email'] .'</p>'
+				. '<p>Tema: ' .$fooValues['tema'] .'</p>'
+				. '<p>Sede: ' .$results->title .'</p>'
+				. '<p>Mensaje: ' .$fooValues['mensaje'] .'<br>'
+				. '</div>';
+			$mailer->isHTML(true);
+			$mailer->Encoding = 'base64';
+			$mailer->setBody($body);
+			
+			$send =& $mailer->Send();
+			if ( $send !== true ) {
+				// echo 'Error sending email: ' . $send->message;
+			} else {
+				// echo 'Mail sent';
+			}
+
+			if(!$e ){
+				echo 1;
+			}else{
+				echo 0;
+			}
+		}
+	}
+?>
+
+
+
+
